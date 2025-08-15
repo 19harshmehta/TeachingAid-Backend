@@ -30,9 +30,11 @@ mongoose.connect(process.env.MONGO_URI, {
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const pollRoutes = require('./routes/pollRoutes');
+const folderRoutes = require('./routes/folderRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/poll', pollRoutes);
+app.use('/api/folder', folderRoutes);
 
 // Socket.IO Events
 io.on('connection', (socket) => {

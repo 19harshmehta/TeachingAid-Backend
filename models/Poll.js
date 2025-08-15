@@ -5,6 +5,10 @@ const pollSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  topic: {
+    type: String, // New field
+    default: null
+  },
   options: {
     type: [String], // Array of options
     required: true
@@ -30,7 +34,12 @@ const pollSchema = new mongoose.Schema({
   votedFingerprints: {
     type: [String], // We'll use this to restrict vote duplication
     default: []
+  },
+  allowMultiple: { 
+    type: Boolean, default: false 
   }
+
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model('Poll', pollSchema);

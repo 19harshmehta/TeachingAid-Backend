@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createPoll, getPollResults } = require('../controllers/pollController');
+const { createPoll, getPollResults, csvUpload, bulkCreateFromCSV } = require('../controllers/pollController');
 const auth = require('../middleware/authMiddleware');
 const { getPollByCode, votePoll } = require('../controllers/pollController');
 const { relaunchPoll } = require('../controllers/pollController');
@@ -13,6 +13,7 @@ router.post('/create', auth, createPoll);
 
 
 router.post('/vote', votePoll);
+router.post('/bulk-create/csv', auth, csvUpload.single('file'), bulkCreateFromCSV);
 router.post('/relaunch', auth, relaunchPoll);
 router.get('/mypolls', auth, getMyPolls);
 router.get('/:code', getPollByCode);
