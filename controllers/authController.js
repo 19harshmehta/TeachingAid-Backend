@@ -56,3 +56,8 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
+
+
+exports.healthCheck = (req, res) => {
+  res.status(200).json({ message: 'Server is running' });
+}

@@ -45,3 +45,20 @@ exports.addPollToFolder = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getPollsOfFolder = async (req, res) => {
+  try {
+    const { folderId } = req.params;
+
+    const folder = await Folder.findById(folderId).populate('polls'); 
+    if (!folder) return res.status(404).json({ message: 'Folder not found' });
+
+    res.json({
+      folderId: folder._id,
+      folderName: folder.name,
+      polls: folder.polls
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
