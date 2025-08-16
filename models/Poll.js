@@ -37,7 +37,14 @@ const pollSchema = new mongoose.Schema({
   },
   allowMultiple: { 
     type: Boolean, default: false 
-  }
+  },
+  history: [
+    {
+      votes: [Number],
+      votedFingerprints: Number,
+      timestamp: { type: Date, default: Date.now }
+    }
+  ]
 
   
 }, { timestamps: true });

@@ -2,7 +2,7 @@ const Poll = require('../models/Poll');
 const generateCode = require('../utils/generateCode');
 
 exports.createPoll = async (req, res) => {
-  const { question, topic ,options , allowMultiple} = req.body;
+  const { question, topic, options, allowMultiple } = req.body;
 
   if (!question || !options || options.length < 2) {
     return res.status(400).json({ message: 'Question and at least 2 options are required' });
@@ -25,7 +25,7 @@ exports.createPoll = async (req, res) => {
       votes: new Array(options.length).fill(0),
       code,
       createdBy: req.user.id,
-      allowMultiple: !!allowMultiple 
+      allowMultiple: !!allowMultiple
     });
 
     res.status(201).json({
@@ -143,6 +143,20 @@ exports.relaunchPoll = async (req, res) => {
     }
 
     if (resetVotes) {
+
+      const historyEntry = {
+        votes: poll.votes,
+        votedFingerprints: poll.votedFingerprints.length,
+        timestamp: new Date()
+      };
+
+      // Instead of pushing, overwrite the last entry
+      if (poll.history.length > 0) {
+        poll.history[poll.history.length - 1] = historyEntry;
+      } else {
+        poll.history.push(historyEntry);
+      }
+      
       poll.votes = new Array(poll.options.length).fill(0);
       poll.votedFingerprints = [];
     }
@@ -164,7 +178,9 @@ exports.relaunchPoll = async (req, res) => {
     res.status(200).json({
       message: 'Poll relaunched successfully',
       code: poll.code,
-      pollId: poll._id
+      pollId: poll._id,
+      history: poll.history
+      
     });
   } catch (err) {
     res.status(500).json({ message: 'Error relaunching poll', error: err.message });
