@@ -181,7 +181,7 @@ exports.relaunchPoll = async (req, res) => {
       code: poll.code,
       pollId: poll._id,
       history: poll.history
-      
+
     });
   } catch (err) {
     res.status(500).json({ message: 'Error relaunching poll', error: err.message });
@@ -241,6 +241,16 @@ exports.updatePollStatus = async (req, res) => {
       return res.status(404).json({ message: 'Poll not found' });
     }
 
+    const historyEntry = {
+      votes: poll.votes,
+      votedFingerprints: poll.votedFingerprints.length,
+      timestamp: new Date()
+    };
+    if (poll.history.length > 0) {
+      poll.history[poll.history.length - 1] = historyEntry;
+    } else {
+      poll.history.push(historyEntry);
+    }
     poll.isActive = isActive;
     await poll.save();
 
