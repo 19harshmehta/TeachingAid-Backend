@@ -1,5 +1,6 @@
 const Poll = require('../models/Poll');
 const generateCode = require('../utils/generateCode');
+const Folder = require('../models/folder');
 
 exports.createPoll = async (req, res) => {
   const { question, topic, options, allowMultiple } = req.body;
@@ -156,7 +157,7 @@ exports.relaunchPoll = async (req, res) => {
       } else {
         poll.history.push(historyEntry);
       }
-      
+
       poll.votes = new Array(poll.options.length).fill(0);
       poll.votedFingerprints = [];
     }
@@ -288,14 +289,12 @@ exports.bulkCreateFromCSV = async (req, res) => {
       return res.status(400).json({ message: 'CSV parse error', errors });
     }
 
-    // helper: bool parser
     const toBool = (v) => {
       if (v === undefined || v === null) return false;
       const s = String(v).trim().toLowerCase();
       return s === 'true' || s === '1' || s === 'yes' || s === 'y';
     };
 
-    // helper: extract options from row
     const extractOptions = (row) => {
       if (row.options) {
         return String(row.options)
@@ -303,7 +302,6 @@ exports.bulkCreateFromCSV = async (req, res) => {
           .map(o => o.trim())
           .filter(Boolean);
       }
-      // option1, option2, option3, ...
       const entries = Object.entries(row)
         .filter(([k]) => /^option\d+$/i.test(k))
         .sort((a, b) => {
@@ -316,7 +314,6 @@ exports.bulkCreateFromCSV = async (req, res) => {
       return entries;
     };
 
-    // helper: generate unique code
     const generateUniqueCode = async () => {
       let code;
       let exists = true;
@@ -348,6 +345,7 @@ exports.bulkCreateFromCSV = async (req, res) => {
 
       const topic = (row.topic || '').toString().trim() || null;
       const allowMultiple = toBool(row.allowMultiple);
+      const folderName = (row.folder || '').toString().trim();
 
       const code = await generateUniqueCode();
 
@@ -358,15 +356,30 @@ exports.bulkCreateFromCSV = async (req, res) => {
         votes: new Array(options.length).fill(0),
         code,
         createdBy: req.user.id,
-        isActive: true
+        isActive: true,
+        allowMultiple
       };
-
-      // If your schema already has allowMultiple (you added it earlier), set it; otherwise Mongoose will ignore it.
-      pollDoc.allowMultiple = allowMultiple;
 
       try {
         const poll = await Poll.create(pollDoc);
         created.push({ row: i + 1, pollId: poll._id, code: poll.code });
+
+        // handle folder
+        if (folderName) {
+          let folder = await Folder.findOne({ name: folderName, createdBy: req.user.id });
+
+          if (!folder) {
+            folder = await Folder.create({
+              name: folderName,
+              createdBy: req.user.id,
+              polls: []
+            });
+          }
+
+          folder.polls.push(poll._id);
+          await folder.save();
+        }
+
       } catch (e) {
         skipped.push({ row: i + 1, reason: e.message });
       }
