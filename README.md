@@ -152,6 +152,4 @@ For any questions, feedback, or collaborations, feel free to reach out:
 
 *   Thanks to all open-source libraries and tools that made this project possible.
 *   Special thanks to the online communities and resources that provide invaluable learning.
-*   Thanks Prof Ankush For such an opportunity to work on such project 
-
-
+*   Thanks Prof Ankush For such an opportunity to work on such project.
