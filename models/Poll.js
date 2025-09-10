@@ -44,7 +44,13 @@ const pollSchema = new mongoose.Schema({
       votedFingerprints: Number,
       timestamp: { type: Date, default: Date.now }
     }
-  ]
+  ],
+  quiz: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quiz',
+    default: null
+  }
+
 
   
 }, { timestamps: true });
