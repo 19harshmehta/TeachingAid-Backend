@@ -1,6 +1,7 @@
 const Quiz = require('../models/Quiz');
 const Poll = require('../models/Poll');
 const generateCode = require('../utils/generateCode');
+const generateUniqueCode = require('../utils/generateUniqueCode');
 
 exports.createQuiz = async (req, res) => {
   const { title, description, questions } = req.body;
@@ -10,24 +11,13 @@ exports.createQuiz = async (req, res) => {
   }
 
   try {
+    // Refactor Canditat
     // Generate unique quiz code
-    let code;
-    let exists = true;
-    while (exists) {
-      code = generateCode();
-      const existingQuiz = await Quiz.findOne({ code });
-      exists = !!existingQuiz;
-    }
+    const code = await generateUniqueCode(Quiz, 'code');
 
     const createdPolls = [];
     for (const q of questions) {
-      let pollCode;
-      let pollExists = true;
-      while (pollExists) {
-        pollCode = generateCode();
-        const existingPoll = await Poll.findOne({ code: pollCode });
-        pollExists = !!existingPoll;
-      }
+      const pollCode = await generateUniqueCode(Poll, 'code');
 
       const newPoll = await Poll.create({
         question: q.question,
@@ -207,24 +197,20 @@ exports.relaunchQuiz = async (req, res) => {
         }
 
         if (generateNewCode) {
+            //REfactor Canditat 
             // Generate new code for the quiz
-            let newQuizCode;
+            
             let quizExists = true;
             while (quizExists) {
-                newQuizCode = generateCode();
-                const existing = await Quiz.findOne({ code: newQuizCode });
-                quizExists = !!existing;
+                quiz.code = await generateUniqueCode(Quiz, 'code');
             }
-            quiz.code = newQuizCode;
-
+            
             // Generate new codes for each poll within the quiz
             for (const poll of quiz.polls) {
                 let newPollCode;
                 let pollExists = true;
                 while (pollExists) {
-                    newPollCode = generateCode();
-                    const existing = await Poll.findOne({ code: newPollCode });
-                    pollExists = !!existing;
+                    poll.code = await generateUniqueCode(Poll, 'code');
                 }
                 poll.code = newPollCode;
                 await poll.save();
