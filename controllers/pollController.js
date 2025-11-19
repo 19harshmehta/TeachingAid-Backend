@@ -399,7 +399,6 @@ exports.bulkCreateFromCSV = async (req, res) => {
   }
 };
 
-// Add this new function at the end of the file
 
 exports.deletePoll = async (req, res) => {
   const code = req.params.code;
