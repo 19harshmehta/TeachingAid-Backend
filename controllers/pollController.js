@@ -280,14 +280,6 @@ const upload = multer({
 // export the multer middleware
 exports.csvUpload = upload;
 
-/**
- * CSV columns supported (header required):
- * - question (required)
- * - topic (optional)
- * - allowMultiple (optional) -> true/false/1/0/yes/no
- * - EITHER "options" (pipe-separated, e.g. Red|Blue|Green)
- * - OR "option1","option2","option3",... (any number)
- */
 exports.bulkCreateFromCSV = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'CSV file required (field name: file)' });
@@ -406,3 +398,36 @@ exports.bulkCreateFromCSV = async (req, res) => {
     return res.status(500).json({ message: 'Bulk create failed', error: err.message });
   }
 };
+
+// Add this new function at the end of the file
+
+exports.deletePoll = async (req, res) => {
+  const code = req.params.code;
+  const userId = req.user.id;
+
+  try {
+    const poll = await Poll.findOne({ code });
+
+    if (!poll) {
+      return res.status(404).json({ message: 'Poll not found' });
+    }
+
+    if (poll.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: 'Unauthorized: You did not create this poll' });
+    }
+
+    await Poll.deleteOne({ code });
+
+    await Folder.updateMany(
+      { polls: poll._id },
+      { $pull: { polls: poll._id } }
+    );
+
+    res.status(204).json({message : 'Poll Deleted sucessfully'});
+  } catch (err) {
+    console.error('Error deleting poll:', err);
+    res.status(500).json({ message: 'Error deleting poll', error: err.message });
+  }
+};
+
+
