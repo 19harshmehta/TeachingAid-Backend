@@ -1,0 +1,561 @@
+{
+	"info": {
+		"_postman_id": "038a83d7-e034-4b52-b892-d3550993540a",
+		"name": "TeachingAid Backend API (PollSync)",
+		"description": "API collection for testing Authentication, Poll Management (CRUD), and Folders. Base URL: {{baseUrl}}",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_collection_id": "314159"
+	},
+	"item": [
+		{
+			"name": "01. Authentication",
+			"description": "Endpoints for user registration and login.",
+			"item": [
+				{
+					"name": "POST Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"{{testEmail}}\",\n    \"password\": \"{{testPassword}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Login User (Get Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (pm.response.code === 200 && jsonData.token) {",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"    pm.test(\"Login Successful - Token Stored\", true);",
+									"}",
+									"else {",
+									"    pm.test(\"Login Failed\", false);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"email\": \"{{testEmail}}\",\n    \"password\": \"{{testPassword}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02. Poll Management",
+			"description": "CRUD operations for polls.",
+			"item": [
+				{
+					"name": "POST Create Poll",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (pm.response.code === 201 && jsonData.code) {",
+									"    pm.environment.set(\"pollCode\", jsonData.code);",
+									"    pm.test(\"Poll Created - Code Stored\", true);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"question\": \"Which JavaScript framework is best?\",\n    \"topic\": \"Tech\",\n    \"options\": [\"React\", \"Vue\", \"Angular\", \"Svelte\"],\n    \"allowMultiple\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET My Polls",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/mypolls",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"mypolls"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Poll By Code",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// This call doesn't require auth but is included here for organization"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/{{pollCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"{{pollCode}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Submit Vote (Requires unique fingerprint)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// You do not need a token for voting",
+									"// Generate a unique fingerprint for testing purposes",
+									"pm.environment.set(\"fingerprint\", (pm.environment.get(\"fingerprint\") || 'FP_') + Date.now());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"code\": \"{{pollCode}}\",\n    \"optionIndex\": 0, \n    \"fingerprint\": \"{{fingerprint}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/vote",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Poll Results",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/results/{{pollCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"results",
+								"{{pollCode}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PUT Update Status (Close Poll)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"isActive\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/{{pollCode}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"{{pollCode}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Relaunch Poll",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (pm.response.code === 200 && jsonData.code) {",
+									"    // Overwrite the pollCode variable with the new code if generated",
+									"    pm.environment.set(\"pollCode\", jsonData.code);",
+									"    pm.test(\"Poll Relaunched Successfully\", true);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"pollId\": \"{{pollId}}\",\n    \"resetVotes\": true,\n    \"generateNewCode\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/relaunch",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"relaunch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE Poll (Final Cleanup)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/poll/{{pollCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"poll",
+								"{{pollCode}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03. Folder Management (Assumed Routes)",
+			"description": "Routes for folder management based on api.ts, assuming /api/folder routes exist.",
+			"item": [
+				{
+					"name": "POST Create Folder",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });",
+									"pm.environment.set(\"folderId\", \"<FOLDER_ID_AFTER_CREATION>\")"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "json",
+							"raw": "{\n    \"name\": \"My Favorite Polls\",\n    \"description\": \"My personal collection of top polls.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/folder",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"folder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET All Folders",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/folder",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"folder"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Add Poll to Folder",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/folder/{{folderId}}/polls/{{pollCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"folder",
+								"{{folderId}}",
+								"polls",
+								"{{pollCode}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Polls by Folder",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.add({ key: \"Authorization\", value: `Bearer ${pm.environment.get(\"token\")}` });"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/folder/{{folderId}}/polls",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"folder",
+								"{{folderId}}",
+								"polls"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"protocolProfileBehavior": {}
+}
